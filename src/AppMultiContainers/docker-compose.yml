@@ -1,0 +1,63 @@
+
+version: "3.8"
+services:
+  myapp:
+    build: .
+    depends_on:
+      redis:
+        condition: service_healthy
+      sqlserver:
+        condition: service_healthy
+      mssqltools:
+        condition: service_completed_successfully
+      mongo:
+         condition: service_healthy
+  sqlserver:
+    container_name: sqlserver
+    image: mcr.microsoft.com/mssql/server:2019-latest
+    environment:
+      SA_PASSWORD: "SqlServer2@23"
+      ACCEPT_EULA: "Y"
+      MSSQL_PID: "Developer"
+    ports:
+      - "1433:1433"
+    healthcheck:
+      test: /opt/mssql-tools/bin/sqlcmd -S sqlserver -U sa -P "SqlServer2@23" -Q "SELECT 1"
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 5s      
+  mssqltools:
+    container_name: mssqltools    
+    image: mcr.microsoft.com/mssql-tools
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+    volumes:
+      - ./users.sql:/tmp/users.sql
+      - ./script.sh:/tmp/script.sh
+    command: /bin/bash /tmp/script.sh    
+  redis:
+    image: redis
+    container_name: redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: [ "CMD", "redis-cli", "--raw", "incr", "ping" ]
+      interval: 1s
+      timeout: 2s
+      retries: 10
+  mongo:
+    container_name: mongo
+    image: mongo
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: Mongo2023!
+    ports:
+      - "27017:27017"
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh mongo:27017/admin --quiet
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 40s            
