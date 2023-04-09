@@ -1,1 +1,2 @@
 # docker-compose-app-multi-container
+This is an project consisting of 4 containers. All services are started using docker compose in order to create the containers. there is a container that represent an application written in C# that connects to 3 services (containers): redis, mongoDB and SQL Server. This project is a demo to demonstrate how easy our lives can be using a tool such as docker-compose in order to increase our productivity.
